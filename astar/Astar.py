@@ -156,7 +156,6 @@ def pathplanning(start, end, image_path, verbose=False):
         for colorpath in path:
             showmaze[colorpath[0]][colorpath[1]] = [200, 50, 200]
             num_of_searched_node += 1
-        print(num_of_searched_node)
 
         for i in [-1, 0, 1]:
             for j in [-1, 0, 1]:
