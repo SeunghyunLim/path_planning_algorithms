@@ -8,10 +8,6 @@ import random
 import numpy as np
 from utils import *
 
-
-show_animation = True
-
-
 class RRT:
     """
     Class for RRT planning
@@ -42,7 +38,8 @@ class RRT:
                  start,
                  goal,
                  obstacle_list,
-                 rand_area,
+                 rand_area_x,
+                 rand_area_y,
                  expand_dis=20.0,
                  path_resolution=0.5,
                  goal_sample_rate=5,
@@ -54,13 +51,16 @@ class RRT:
         start:Start Position [x,y]
         goal:Goal Position [x,y]
         obstacleList:obstacle Positions [[x,y,size],...]
-        randArea:Random Sampling Area [min,max]
+        randAreax:Random Sampling Area for x [min,max]
+        randAreay:Random Sampling Area for y [min,max]
         play_area:stay inside this area [xmin,xmax,ymin,ymax]
         """
         self.start = self.Node(start[0], start[1])
         self.end = self.Node(goal[0], goal[1])
-        self.min_rand = rand_area[0]
-        self.max_rand = rand_area[1]
+        self.min_rand_x = rand_area_x[0]
+        self.max_rand_x = rand_area_x[1]
+        self.min_rand_y = rand_area_y[0]
+        self.max_rand_y = rand_area_y[1]
         if play_area is not None:
             self.play_area = self.AreaBounds(play_area)
         else:
@@ -79,6 +79,9 @@ class RRT:
         """
 
         self.node_list = [self.start]
+        if animation:
+            for (ox, oy) in self.obstacle_list:
+                plt.plot(ox, oy, ".", color='blue')
         for i in range(self.max_iter):
             rnd_node = self.get_random_node()
             nearest_ind = self.get_nearest_node_index(self.node_list, rnd_node)
@@ -98,6 +101,7 @@ class RRT:
                 final_node = self.steer(self.node_list[-1], self.end,
                                         self.expand_dis)
                 if self.check_collision(final_node, self.obstacle_list):
+                    self.draw_path(self.generate_final_course(len(self.node_list) - 1))
                     return self.generate_final_course(len(self.node_list) - 1)
 
             if animation and i % 5:
@@ -153,15 +157,36 @@ class RRT:
     def get_random_node(self):
         if random.randint(0, 100) > self.goal_sample_rate:
             rnd = self.Node(
-                random.uniform(self.min_rand, self.max_rand),
-                random.uniform(self.min_rand, self.max_rand))
+                random.uniform(self.min_rand_x, self.max_rand_x),
+                random.uniform(self.min_rand_y, self.max_rand_y))
         else:  # goal point sampling
             rnd = self.Node(self.end.x, self.end.y)
         return rnd
 
+    def draw_path(self, path):
+        plt.gcf().canvas.mpl_connect(
+            'key_release_event',
+            lambda event: [exit(0) if event.key == 'escape' else None])
+        _xlist = []
+        _ylist = []
+        for [px, py] in path:
+            _xlist.append(px)
+            _ylist.append(py)
+        for (ox, oy) in self.obstacle_list:
+            plt.plot(ox, oy, "s", color='black')
+        plt.plot(_xlist, _ylist, "-", color='r')
+        plt.axis("equal")
+        plt.axis([0, self.max_rand_x, 0, self.max_rand_y])
+        plt.gca().invert_yaxis()
+        plt.grid(True)
+        plt.pause(1)
+
     def draw_graph(self, rnd=None):
         plt.clf()
         # for stopping simulation with the esc key.
+        plt.axis("equal")
+        plt.axis([0, self.max_rand_x, 0, self.max_rand_y])
+        plt.gca().invert_yaxis()
         plt.gcf().canvas.mpl_connect(
             'key_release_event',
             lambda event: [exit(0) if event.key == 'escape' else None])
@@ -171,8 +196,8 @@ class RRT:
             if node.parent:
                 plt.plot(node.path_x, node.path_y, "-g")
 
-        for (ox, oy) in self.obstacle_list:
-            plt.plot(ox, oy, ".")
+        #for (ox, oy) in self.obstacle_list:
+        #    plt.plot(ox, oy, ".")
 
         if self.play_area is not None:
             plt.plot([self.play_area.xmin, self.play_area.xmax,
@@ -185,18 +210,8 @@ class RRT:
 
         plt.plot(self.start.x, self.start.y, "xr")
         plt.plot(self.end.x, self.end.y, "xr")
-        plt.axis("equal")
-        plt.axis([0, 100, 0, 100])
         plt.grid(True)
         plt.pause(0.001)
-
-    @staticmethod
-    def plot_circle(x, y, size, color="-b"):  # pragma: no cover
-        deg = list(range(0, 360, 5))
-        deg.append(0)
-        xl = [x + size * math.cos(np.deg2rad(d)) for d in deg]
-        yl = [y + size * math.sin(np.deg2rad(d)) for d in deg]
-        plt.plot(xl, yl, color)
 
     @staticmethod
     def get_nearest_node_index(node_list, rnd_node):
@@ -242,30 +257,22 @@ class RRT:
         theta = math.atan2(dy, dx)
         return d, theta
 
-def maze2obs(maze, x_w, y_w):
-    obstacleList = []
-    for i in range(x_w-1):
-        for j in range(y_w-1):
-            if maze[j][i] == 1:
-                obstacleList.append((i, j))
-    return obstacleList
 
 def rrt(maze, start, end):
-    x_w = len(maze[0])
-    y_w = len(maze)
+    x_w = len(maze[0])+1
+    y_w = len(maze)+1
     obstacleList = maze2obs(maze, x_w, y_w)
 
     start_eq = (start[1],start[0])
     end_eq = (end[1],end[0])
 
-    rrt_excute = RRT(start_eq, end_eq, rand_area=[0, 80], obstacle_list=obstacleList)
-    path = rrt_excute.planning(animation=False)
+    rrt_excute = RRT(start_eq, end_eq, rand_area_x=[0, x_w-1], rand_area_y=[0, y_w-1], obstacle_list=obstacleList)
+    path = rrt_excute.planning(animation=True)
 
     if path is None:
         print("Cannot find path")
 
     return path
-
 
 
 def pathplanning(start, end, image_path, verbose=False):

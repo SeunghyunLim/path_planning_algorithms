@@ -99,3 +99,11 @@ def convert2meter(path, scale=0.2):
         metered_grid = [i * scale for i in grid]
         metered_path.append(metered_grid)
     return metered_path
+
+def maze2obs(maze, x_w, y_w):
+    obstacleList = []
+    for i in range(x_w-1):
+        for j in range(y_w-1):
+            if maze[j][i] == 1:
+                obstacleList.append((i, j))
+    return obstacleList
