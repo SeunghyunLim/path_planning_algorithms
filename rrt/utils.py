@@ -76,7 +76,7 @@ def img2binList(img, lenWidth, GRID_SIZE=50, verbose=1):
     DISTANCECOSTMAP = solution
 
     # cv2.destroyAllWindows()
-    return maze
+    return maze, DISTANCECOSTMAP
 
 def distcost(x, y, safty_value=2):
     # large safty value makes the path more away from the wall

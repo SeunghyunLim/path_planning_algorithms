@@ -124,8 +124,9 @@ def pathplanning(start, end, image_path, verbose=False):
 
     # Convert map image to binary list
     img = cv2.imread(image_path)
-    #maze = img2binList(img, lenWidth=3580, GRID_SIZE=20, verbose=0) #cm, 1000 for E5-223 lobby 3580
-    maze = img2binList(img, lenWidth=100, GRID_SIZE=1, verbose=0) # for test4.png
+    #maze, DISTANCECOSTMAP = img2binList(img, lenWidth=3580, GRID_SIZE=20, verbose=0) #cm, 1000 for E5-223 lobby 3580
+    #maze, DISTANCECOSTMAP = img2binList(img, lenWidth=100, GRID_SIZE=1, verbose=0) # for test4.png, lenWidth=100, GRID_SIZE=1
+    maze, DISTANCECOSTMAP = img2binList(img, lenWidth=1000, GRID_SIZE=10, verbose=0) # for test4.png, lenWidth=100, GRID_SIZE=1
     # Start and End point setting
 
     print("Start =", start, '\n', "End =", end)
@@ -173,8 +174,8 @@ def pathplanning(start, end, image_path, verbose=False):
     return path
 
 if __name__ == '__main__':
-    #start = (100, 55)
-    #end = (30, 144) # (45,33) green sofa (87,76) desk (70, 115) tree (75, 160) dosirak (100,144) gs
-    start = (10, 10)
-    end = (60, 75)
-    pathplanning(start, end, image_path="test4.png", verbose=True)
+    #start = (10, 10) # for test4.png
+    #end = (60, 75) # for test4.png
+    start = (60, 11) # for test4.png
+    end = (60, 90) # for test4.png
+    pathplanning(start, end, image_path="Maze.png", verbose=True)
